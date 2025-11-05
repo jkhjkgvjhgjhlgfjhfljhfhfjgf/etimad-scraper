@@ -1,0 +1,47 @@
+# 1. اسم سير العمل (سيظهر في قائمة Actions)
+name: Build Windows EXE
+
+# 2. متى يتم التشغيل؟
+on:
+  # (أ) عند الدفع (push) إلى الفرع الرئيسي (main)
+  push:
+    branches: [ "main" ]
+  # (ب) يسمح لك بتشغيله يدوياً من واجهة جيت هاب
+  workflow_dispatch:
+
+# 3. المهام (Jobs)
+jobs:
+  build:
+    # 4. "المفتاح السحري" - شغّل هذا على آخر إصدار ويندوز
+    runs-on: windows-latest
+
+    steps:
+      # 5. الخطوة الأولى: تحميل الكود الخاص بك من جيت هاب إلى الخادم
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 6. الخطوة الثانية: تثبيت بايثون على الخادم
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # يمكنك اختيار الإصدار
+
+      # 7. الخطوة الثالثة: تثبيت المكتبات
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller  # تثبيت أداة البناء
+          pip install -r requirements.txt # تثبيت (requests, openpyxl)
+
+      # 8. الخطوة الرابعة: تشغيل PyInstaller (نفس الأمر الخاص بك)
+      - name: Build with PyInstaller
+        run: pyinstaller --onedir --noconsole etimad_gui.py
+
+      # 9. "المفتاح السحري الثاني" - رفع المجلد الناتج كملف مضغوط
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # اسم الملف الذي ستقوم بتحميله
+          name: etimad-scraper-windows
+          # المجلد الذي سيتم ضغطه (مجلد البرنامج)
+          path: dist/etimad_gui
